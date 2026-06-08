@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="id">
 <head>
-  <title>Sistem Keuangan | PONDOK</title>
+  <title>Sistem Keuangan | Pondok Al-Barokah</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <base target="_top">
@@ -108,7 +108,7 @@
     <div class="sidebar-overlay" :class="{'show': sidebarOpen}" @click="sidebarOpen = false"></div>
     <nav id="sidebar" :class="{'open': sidebarOpen}">
       <div class="sidebar-brand">
-        <h6 class="fw-bold m-0 text-white"><i class="fa-solid fa-building-columns me-2"></i>PONDOK</h6>
+        <h6 class="fw-bold m-0 text-white"><i class="fa-solid fa-building-columns me-2"></i>Pondok Al-Barokah</h6>
       </div>
       <div class="text-center py-2 bg-dark" style="font-size:11px; color:#bbb;">
         Login: <span class="fw-bold text-warning text-uppercase"><i class="fa-solid fa-user-shield me-1"></i> {{ session.role }}</span>
@@ -575,7 +575,7 @@
         </div>
       </div>
       <footer class="text-center py-3 text-muted no-print" style="font-size: 11px;">
-        © 2026 <strong>Aplikasi Keuangan PONDOK</strong> | Belajar Inovasi
+        © 2026 <strong>Aplikasi Keuangan Pondok Al-Barokah</strong> | Belajar Inovasi
       </footer>
     </div>
 
@@ -1007,7 +1007,7 @@
         kirimInfoTagihanWA(group) {
           const siswa = this.listSiswa.find(s => s.nama === group.nama);
           const noHp = siswa ? this.formatNoWA(siswa.noHp) : '';
-          let text = `*INFO TAGIHAN PONDOK*\nSistem Administrasi Terpadu - Belajar Inovasi\n\nNama Siswa: ${group.nama}\n\nRincian Tunggakan Belum Dibayar:\n`;
+          let text = `*INFO TAGIHAN Pondok Al-Barokah*\nSistem Administrasi Terpadu - Belajar Inovasi\n\nNama Siswa: ${group.nama}\n\nRincian Tunggakan Belum Dibayar:\n`;
           group.details.forEach((r, i) => {
             text += `${i+1}. ${r[3]} (Sisa: ${this.formatRp(r[6])})\n`;
           });
@@ -1221,7 +1221,7 @@
             const res = await this.apiCall('prosesPembayaranSiswa', { payload: payload });
             this.loading = false;
             if(res.success) {
-              let textWA = `*BUKTI PEMBAYARAN PONDOK*\nSistem Administrasi Terpadu - Belajar Inovasi\n\nNama Siswa: ${payload.siswa.nama}\nNo. Invoice: ${payload.invoice}\nTanggal: ${payload.tglBayar}\n\nRincian Pembayaran:\n`;
+              let textWA = `*BUKTI PEMBAYARAN Pondok Al-Barokah*\nSistem Administrasi Terpadu - Belajar Inovasi\n\nNama Siswa: ${payload.siswa.nama}\nNo. Invoice: ${payload.invoice}\nTanggal: ${payload.tglBayar}\n\nRincian Pembayaran:\n`;
               payload.items.forEach(i => { textWA += `- ${i.jenis} : ${this.formatRp(i.nilai_bayar)}\n`; });
               textWA += `\n*Total Dibayar: ${this.formatRp(payload.total)}*\n\nTerima kasih atas pembayarannya.`;
 
