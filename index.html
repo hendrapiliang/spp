@@ -53,7 +53,7 @@
         .row-child-container { background-color: #fafbfc; padding: 15px; border-left: 4px solid #3498db; }
         #invoice-print-area, #riwayat-print-area { display: none; background: white; padding: 30px; font-family: Arial, sans-serif; color: black; }
         .invoice-kop { display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        
+
         @media print {
             @page { size: auto; margin: 10mm; }
             html, body { height: auto !important; overflow: visible !important; background: #ffffff !important; background-color: #ffffff !important; }
@@ -66,11 +66,7 @@
             .printing-invoice #invoice-print-area { display: block !important; width: 100% !important; }
             .printing-riwayat > div:not(#riwayat-print-area) { display: none !important; }
             .printing-riwayat #riwayat-print-area { display: block !important; width: 100% !important; }
-
-            /* PERBAIKAN: Menghapus selector div:not() yang salah menarget parent untuk tunggakan */
             .printing-tunggakan #tunggakan-print-area { display: block !important; width: 100% !important; }
-            
-            /* PERBAIKAN: Mengatasi bug tabel terpotong saat diprint dari browser berbasis Chromium */
             .table-responsive { overflow: visible !important; }
             ::-webkit-scrollbar { display: none; }
         }
@@ -660,7 +656,8 @@
                                 <td class="text-end bg-light">{{ formatRp(item.tagihan) }}<br><small class="text-danger fw-bold">Sisa: {{ formatRp(item.sisa) }}</small></td>
                                 <td>
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text">Rp</span><input type="number" class="form-control text-end fw-bold" v-model.number="item.nilai_bayar">
+                                        <span class="input-group-text">Rp</span>
+                                        <input type="number" class="form-control text-end fw-bold" v-model.number="item.nilai_bayar">
                                     </div>
                                 </td>
                                 <td class="text-center"><button @click="formBayar.items.splice(idx, 1)" class="btn btn-outline-danger btn-sm py-0 px-2"><i class="fa-solid fa-trash-can"></i></button></td>
@@ -967,6 +964,29 @@ createApp({
                 }
             });
             return { total: total, jumlahSiswa: siswaSet.size };
+        }
+    },
+    watch: {
+        // PERBAIKAN: UX saat mengubah nilai bayar parsial (Total Keranjang) di modal pembayaran, 
+        // otomatis akan mengubah nilai input TUNAI jika metode lain masih 0.
+        totalTagihanCart(newVal) {
+            if (this.formBayar.metodeBayar.transfer === 0 && this.formBayar.metodeBayar.qris === 0 && this.formBayar.metodeBayar.tabungan === 0) {
+                this.formBayar.metodeBayar.tunai = newVal;
+            }
+        },
+        // PERBAIKAN: Otomatis menghitung sisa tagihan secara real-time saat Anda mengedit "Telah Dibayar" di modal Rincian
+        'modal.formData': {
+            handler(newVal) {
+                if (this.view === 'tagihan_siswa' && this.modal.show) {
+                    let nominal = Number(newVal[4]) || 0;
+                    let dibayar = Number(newVal[5]) || 0;
+                    let calc = nominal - dibayar;
+                    if (newVal[6] !== calc) {
+                        this.modal.formData[6] = calc;
+                    }
+                }
+            },
+            deep: true
         }
     },
     created() {
@@ -1321,10 +1341,19 @@ createApp({
             this.loading = true;
             const targetModule = this.view === 'pembayaran_siswa' ? 'pendapatan' : this.view;
             let dataToSave = [...this.modal.formData];
+            
             if(this.view === 'tabungan') {
                 let idxSaldo = this.tableData.header.findIndex(h => h.toLowerCase() === 'saldo');
                 if(idxSaldo !== -1) dataToSave.splice(idxSaldo, 1);
             }
+            
+            // PERBAIKAN: Hitung/Pastikan sisa tagihan valid sebelum ditarik ke server
+            if(targetModule === 'tagihan_siswa') {
+                let nominal = Number(dataToSave[4]) || 0;
+                let dibayar = Number(dataToSave[5]) || 0;
+                dataToSave[6] = nominal - dibayar;
+            }
+            
             try {
                 const res = await this.apiCall('crudOperation', { crudAction: this.modal.action, moduleName: targetModule, rowData: dataToSave, identifierStr: this.modal.identifier });
                 this.loading = false;
