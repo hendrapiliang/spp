@@ -455,7 +455,7 @@
                                     <tr>
                                         <th>NIS</th>
                                         <th>Nama Siswa</th>
-                                        <th>Rincian Tagihan</th>
+                                        <th>Kelas</th> <th>Rincian Tagihan</th>
                                         <th class="text-end">Nominal Tagihan</th>
                                         <th class="text-end">Telah Dibayar</th>
                                         <th class="text-end">Sisa (Tunggakan)</th>
@@ -466,7 +466,7 @@
                                     <tr v-for="row in dataLaporanTunggakan" :key="row.id">
                                         <td>{{ row.nis }}</td>
                                         <td class="fw-bold">{{ row.nama }}</td>
-                                        <td>{{ row.jenis }}</td>
+                                        <td>{{ row.kelas }}</td> <td>{{ row.jenis }}</td>
                                         <td class="text-end">{{ formatRp(row.nominal) }}</td>
                                         <td class="text-end text-success">{{ formatRp(row.dibayar) }}</td>
                                         <td class="text-end fw-bold" :class="row.sisa > 0 ? 'text-danger' : 'text-success'">{{ formatRp(row.sisa) }}</td>
@@ -476,8 +476,7 @@
                                         </td>
                                     </tr>
                                     <tr v-if="dataLaporanTunggakan.length === 0">
-                                        <td colspan="7" class="text-center p-4 text-muted">Data tidak ditemukan.</td>
-                                    </tr>
+                                        <td colspan="8" class="text-center p-4 text-muted">Data tidak ditemukan.</td> </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -934,11 +933,23 @@ createApp({
             }
             return arr;
         },
+        // PERBAIKAN: Menambahkan proses penggabungan data Kelas ke dalam array tunggakan
         dataLaporanTunggakan() {
             if (this.view !== 'laporan_tunggakan') return [];
-            let data = this.tableData.body.map(r => ({
-                id: r[0], nis: r[1], nama: r[2], jenis: r[3], nominal: Number(r[4]), dibayar: Number(r[5]), sisa: Number(r[6])
-            }));
+            let data = this.tableData.body.map(r => {
+                let siswa = this.listSiswa.find(s => s.nama === r[2] || s.nis == r[1]);
+                return {
+                    id: r[0], 
+                    nis: r[1], 
+                    nama: r[2], 
+                    kelas: siswa ? siswa.kelas : '-', 
+                    jenis: r[3], 
+                    nominal: Number(r[4]), 
+                    dibayar: Number(r[5]), 
+                    sisa: Number(r[6])
+                };
+            });
+            
             if (this.filterTunggakan.siswa) {
                 let s = this.filterTunggakan.siswa.toLowerCase();
                 data = data.filter(d => d.nama.toLowerCase().includes(s) || d.nis.toString().toLowerCase().includes(s));
@@ -967,14 +978,11 @@ createApp({
         }
     },
     watch: {
-        // PERBAIKAN: UX saat mengubah nilai bayar parsial (Total Keranjang) di modal pembayaran, 
-        // otomatis akan mengubah nilai input TUNAI jika metode lain masih 0.
         totalTagihanCart(newVal) {
             if (this.formBayar.metodeBayar.transfer === 0 && this.formBayar.metodeBayar.qris === 0 && this.formBayar.metodeBayar.tabungan === 0) {
                 this.formBayar.metodeBayar.tunai = newVal;
             }
         },
-        // PERBAIKAN: Otomatis menghitung sisa tagihan secara real-time saat Anda mengedit "Telah Dibayar" di modal Rincian
         'modal.formData': {
             handler(newVal) {
                 if (this.view === 'tagihan_siswa' && this.modal.show) {
@@ -1268,6 +1276,8 @@ createApp({
                 this.loading = false;
                 if(res.success) {
                     this.tableData = { header: res.header, body: res.body };
+                    
+                    // PERBAIKAN: Jika masuk ke tagihan_siswa atau laporan_tunggakan, kita pastikan daftar siswa dan kelas ditarik
                     if(targetModule === 'tagihan_siswa') {
                         if(this.listKelas.length === 0) this.fetchDaftarKelas();
                         if(this.listSiswa.length === 0) {
@@ -1347,7 +1357,6 @@ createApp({
                 if(idxSaldo !== -1) dataToSave.splice(idxSaldo, 1);
             }
             
-            // PERBAIKAN: Hitung/Pastikan sisa tagihan valid sebelum ditarik ke server
             if(targetModule === 'tagihan_siswa') {
                 let nominal = Number(dataToSave[4]) || 0;
                 let dibayar = Number(dataToSave[5]) || 0;
@@ -1381,6 +1390,7 @@ createApp({
             const ws = XLSX.utils.json_to_sheet(sheetData); const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Data Export"); XLSX.writeFile(wb, `Export_${this.view}_${new Date().getTime()}.xlsx`);
         },
+        // PERBAIKAN: Menambahkan field "Kelas" ke dalam Export Excel Laporan Tunggakan
         exportExcelTunggakan() {
             if(this.dataLaporanTunggakan.length === 0) return this.toast('Data tidak tersedia', 'warning');
             const sheetData = this.dataLaporanTunggakan.map((row, index) => {
@@ -1388,6 +1398,7 @@ createApp({
                     "No": index + 1,
                     "NIS": row.nis,
                     "Nama Siswa": row.nama,
+                    "Kelas": row.kelas,
                     "Rincian Tagihan": row.jenis,
                     "Nominal Tagihan (Rp)": row.nominal,
                     "Telah Dibayar (Rp)": row.dibayar,
