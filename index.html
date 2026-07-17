@@ -173,7 +173,7 @@
             </div>
             
             <div class="main-container" :class="{'printing-invoice': printMode === 'invoice', 'printing-riwayat': printMode === 'riwayat', 'printing-tunggakan': printMode === 'tunggakan'}">
-                <!-- VIEW COMPONENT TEMPLATES... -->
+                
                 <div v-show="view === 'dashboard'">
                     <div class="row g-3 mb-4" v-if="session.role !== 'siswa'">
                         <div class="col-md-2 col-6" style="width: 20%;">
@@ -232,7 +232,6 @@
                     </div>
                 </div>
                 
-                <!-- Pembayaran Siswa -->
                 <div v-show="view === 'pembayaran_siswa'">
                     <div class="card-custom p-4">
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 border-bottom pb-3">
@@ -283,7 +282,6 @@
                     </div>
                 </div>
                 
-                <!-- Tagihan Siswa -->
                 <div v-show="view === 'tagihan_siswa'">
                     <div class="card-custom p-4">
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 border-bottom pb-3">
@@ -337,7 +335,6 @@
                     </div>
                 </div>
                 
-                <!-- Tabungan Siswa -->
                 <div v-show="view === 'tabungan'">
                     <div class="card-custom p-4">
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 border-bottom pb-3">
@@ -366,10 +363,12 @@
                                                     <thead class="bg-light"><tr><th>Tanggal</th><th>Mutasi</th><th>Sisa Saldo</th><th>Keterangan</th><th v-if="session.role === 'admin' || session.role === 'bendahara'" class="text-center">Aksi</th></tr></thead>
                                                     <tbody>
                                                         <tr v-for="row in g.details" :key="row[0]">
-                                                            <td>{{ row[1] }}</td>
-                                                            <td :class="Number(row[3]) < 0 ? 'text-danger fw-bold' : 'text-success fw-bold'">{{ Number(row[3]) > 0 ? '+ ' : '' }}{{ formatRp(row[3]) }}</td>
-                                                            <td class="fw-bold">{{ formatRp(row[4]) }}</td>
-                                                            <td>{{ row[5] }}</td>
+                                                            <td>{{ row[idxTabungan.tgl !== -1 ? idxTabungan.tgl : 1] }}</td>
+                                                            <td :class="Number(row[idxTabungan.nominal !== -1 ? idxTabungan.nominal : 3]) < 0 ? 'text-danger fw-bold' : 'text-success fw-bold'">
+                                                                {{ Number(row[idxTabungan.nominal !== -1 ? idxTabungan.nominal : 3]) > 0 ? '+ ' : '' }}{{ formatRp(row[idxTabungan.nominal !== -1 ? idxTabungan.nominal : 3]) }}
+                                                            </td>
+                                                            <td class="fw-bold">{{ formatRp(idxTabungan.saldo !== -1 ? row[idxTabungan.saldo] : row._virtualSaldo) }}</td>
+                                                            <td style="white-space: pre-wrap;">{{ row[idxTabungan.ket !== -1 ? idxTabungan.ket : 4] }}</td>
                                                             <td v-if="session.role === 'admin' || session.role === 'bendahara'" class="text-center" style="white-space: nowrap;">
                                                                 <button @click="openModal('edit', row)" class="btn btn-primary btn-action shadow-sm text-white"><i class="fa-solid fa-pen-to-square"></i></button>
                                                                 <button @click="deleteData(row[0], view)" class="btn btn-danger btn-action shadow-sm text-white ms-1"><i class="fa-solid fa-trash-can"></i></button>
@@ -389,7 +388,6 @@
                     </div>
                 </div>
                 
-                <!-- Master Data Tables -->
                 <div v-show="['users', 'siswa', 'pendapatan', 'pengeluaran', 'utang_pegawai', 'jenis_pendapatan', 'kategori_pengeluaran'].includes(view)">
                     <div class="card-custom p-4">
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
@@ -428,7 +426,6 @@
                     </div>
                 </div>
                 
-                <!-- Laporan Tunggakan -->
                 <div v-show="view === 'laporan_tunggakan'">
                     <div class="card-custom p-4 no-print">
                         <h5 class="fw-bold mb-4"><i class="fa-solid fa-file-invoice-dollar text-danger me-2"></i> Laporan Tunggakan Siswa</h5>
@@ -525,7 +522,6 @@
                     </div>
                 </div>
                 
-                <!-- Print Areas -->
                 <div id="invoice-print-area" v-if="cetakData">
                     <div class="invoice-kop">
                         <img src="https://lh3.googleusercontent.com/d/1hI7bEuwg6-FOe_NWIq-HMR6H_q_JmiM_" width="80" style="margin-right: 15px;" onerror="this.style.display='none'">
@@ -608,7 +604,6 @@
             </footer>
         </div>
         
-        <!-- Modals -->
         <div v-if="modalBuatTagihan.show" class="modal-custom" style="z-index: 1065;">
             <div class="modal-body-custom shadow-lg sm">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
@@ -853,7 +848,7 @@
                         </div>
                     </template>
                     <template v-for="(head, i) in tableData.header" :key="'cat-'+i">
-                        <div class="col-12" v-if="['catatan', 'keterangan'].includes(head.toLowerCase())">
+                        <div class="col-12" v-if="head.toLowerCase().includes('catatan') || head.toLowerCase().includes('keterangan')">
                             <label class="form-label fw-bold text-muted small mb-1">{{ head }}</label>
                             <textarea v-model="modal.formData[i]" class="form-control bg-light" rows="3" placeholder="Input teks catatan/keterangan"></textarea>
                         </div>
@@ -942,27 +937,46 @@ createApp({
             }
             return arr;
         },
-        // PERBAIKAN: Menghitung Saldo Berjalan Secara Dinamis di Frontend
+        idxTabungan() {
+            let h = this.tableData.header;
+            if(!h || h.length === 0) return { tgl: 1, nominal: 3, saldo: -1, ket: 4 };
+            return {
+                tgl: h.findIndex(x => x.toLowerCase().includes('tgl') || x.toLowerCase().includes('tanggal')),
+                nominal: h.findIndex(x => x.toLowerCase().includes('nominal') || x.toLowerCase().includes('mutasi') || x.toLowerCase().includes('jumlah')),
+                saldo: h.findIndex(x => x.toLowerCase() === 'saldo' || x.toLowerCase().includes('sisa saldo')),
+                ket: h.findIndex(x => x.toLowerCase().includes('keterangan') || x.toLowerCase().includes('catatan'))
+            };
+        },
         groupedTabungan() {
             if (this.view !== 'tabungan') return [];
             let groups = {};
+            
+            let iTgl = this.idxTabungan.tgl !== -1 ? this.idxTabungan.tgl : 1;
+            let iNominal = this.idxTabungan.nominal !== -1 ? this.idxTabungan.nominal : 3;
+            let iSaldo = this.idxTabungan.saldo;
+
             this.tableData.body.forEach(row => {
-                let nama = row[2];
+                let nama = row[2]; // Index 2 default nama siswa
                 if (!groups[nama]) {
                     let s = this.listSiswa.find(x => x.nama === nama);
                     let kelas = s ? s.kelas : '-';
                     groups[nama] = { nama: nama, kelas: kelas, currentSaldo: 0, details: [] };
                 }
-                groups[nama].details.push(row);
+                groups[nama].details.push([...row]); // Hindari mutasi langsung pada array state
             });
             
             let arr = Object.values(groups);
             arr.forEach(g => {
                 let saldoSum = 0;
                 g.details.forEach(row => {
-                    let mutasi = Number(row[3]) || 0;
+                    let mutasi = Number(row[iNominal]) || 0;
                     saldoSum += mutasi;
-                    row[4] = saldoSum; // Assign perhitungan real-time Sisa Saldo ke row index
+                    
+                    if (iSaldo !== -1) {
+                        row[iSaldo] = saldoSum;
+                    } else {
+                        row._virtualSaldo = saldoSum; // Simpan secara virtual jika sheet tak punya kolom saldo
+                    }
                 });
                 g.currentSaldo = saldoSum;
             });
@@ -1400,10 +1414,9 @@ createApp({
             const targetModule = this.view === 'pembayaran_siswa' ? 'pendapatan' : this.view;
             let dataToSave = [...this.modal.formData];
             
-            // PERBAIKAN: Menghindari terpotongnya kolom agar struktur sheet tidak kacau
             if(this.view === 'tabungan') {
-                let idxSaldo = this.tableData.header.findIndex(h => h.toLowerCase().includes('saldo'));
-                if(idxSaldo !== -1) dataToSave[idxSaldo] = 0; // Set default 0 sebelum dikirim (dihitung dinamis via vue frontend)
+                let idxSaldo = this.tableData.header.findIndex(h => h.toLowerCase() === 'saldo');
+                if(idxSaldo !== -1) dataToSave[idxSaldo] = 0; 
             }
             
             if(targetModule === 'tagihan_siswa') {
