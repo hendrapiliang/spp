@@ -138,7 +138,7 @@
             <div class="menu-header">Dashboard</div>
             <a @click="go('dashboard')" :class="['nav-link', view === 'dashboard' ? 'active' : '']"><i class="fa-solid fa-chart-pie text-info"></i> Ringkasan Utama</a>
             
-            <template v-if="session.role === 'admin' || session.role === 'bendahara'">
+            <template v-if="['admin', 'bendahara', 'kepala sekolah'].includes(session.role)">
                 <div class="menu-header">Data Transaksi</div>
                 <a @click="go('pendapatan')" :class="['nav-link', view === 'pendapatan' ? 'active' : '']"><i class="fa-solid fa-coins text-success"></i> Pendapatan Lain</a>
                 <a @click="go('pembayaran_siswa')" :class="['nav-link', view === 'pembayaran_siswa' ? 'active' : '']"><i class="fa-solid fa-user-graduate text-success"></i> Riwayat Pembayaran</a>
@@ -146,7 +146,7 @@
                 <a @click="go('pengeluaran')" :class="['nav-link', view === 'pengeluaran' ? 'active' : '']"><i class="fa-solid fa-cart-shopping text-danger"></i> Pengeluaran Kas</a>
                 <a @click="go('utang_pegawai')" :class="['nav-link', view === 'utang_pegawai' ? 'active' : '']"><i class="fa-solid fa-file-invoice-dollar text-warning"></i> Utang Pegawai</a>
                 <div class="menu-header">Master Data</div>
-                <a v-if="session.role === 'admin'" @click="go('users')" :class="['nav-link', view === 'users' ? 'active' : '']"><i class="fa-solid fa-users-gear text-primary"></i> Data Pengguna</a>
+                <a v-if="['admin', 'kepala sekolah'].includes(session.role)" @click="go('users')" :class="['nav-link', view === 'users' ? 'active' : '']"><i class="fa-solid fa-users-gear text-primary"></i> Data Pengguna</a>
                 <a @click="go('siswa')" :class="['nav-link', view === 'siswa' ? 'active' : '']"><i class="fa-solid fa-id-badge text-secondary"></i> Data Siswa</a>
                 <a @click="go('tagihan_siswa')" :class="['nav-link', view === 'tagihan_siswa' ? 'active' : '']"><i class="fa-solid fa-file-signature text-primary"></i> Data Tagihan Siswa</a>
                 <a @click="go('jenis_pendapatan')" :class="['nav-link', view === 'jenis_pendapatan' ? 'active' : '']"><i class="fa-solid fa-tags text-secondary"></i> Jenis Pendapatan</a>
@@ -238,7 +238,7 @@
                             <h5 class="fw-bold m-0 mb-3 mb-md-0"><i class="fa-solid fa-cash-register text-success me-2"></i> Riwayat Pembayaran Siswa</h5>
                             <div class="d-flex gap-2">
                                 <input type="text" class="form-control form-control-sm" placeholder="Cari Nama Siswa..." v-model="searchHistory">
-                                <button v-if="session.role !== 'siswa'" @click="bukaModalBayar" class="btn btn-success btn-sm shadow-sm" style="white-space: nowrap;"><i class="fa-solid fa-circle-plus me-1"></i> Input Bayar</button>
+                                <button v-if="['admin', 'bendahara'].includes(session.role)" @click="bukaModalBayar" class="btn btn-success btn-sm shadow-sm" style="white-space: nowrap;"><i class="fa-solid fa-circle-plus me-1"></i> Input Bayar</button>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -288,7 +288,7 @@
                             <h5 class="fw-bold m-0 mb-3 mb-md-0"><i class="fa-solid fa-file-signature text-primary me-2"></i> Data Tagihan Siswa</h5>
                             <div class="d-flex gap-2">
                                 <input type="text" class="form-control form-control-sm" placeholder="Cari Siswa..." v-model="searchTagihan">
-                                <button v-if="session.role !== 'siswa'" @click="bukaModalBuatTagihan" class="btn btn-primary btn-sm shadow-sm" style="white-space: nowrap;"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> Generate</button>
+                                <button v-if="['admin', 'bendahara'].includes(session.role)" @click="bukaModalBuatTagihan" class="btn btn-primary btn-sm shadow-sm" style="white-space: nowrap;"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> Generate</button>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -302,7 +302,7 @@
                                         <td class="fw-bold text-danger">{{ formatRp(g.totalKurang) }}</td>
                                         <td class="text-center">
                                             <button class="btn btn-sm btn-outline-primary py-0 px-2 shadow-sm">Rincian</button>
-                                            <button v-if="session.role !== 'siswa'" class="btn btn-sm btn-success py-0 px-2 ms-1 shadow-sm" @click.stop="kirimInfoTagihanWA(g)"><i class="fa-brands fa-whatsapp"></i> WA</button>
+                                            <button v-if="['admin', 'bendahara'].includes(session.role)" class="btn btn-sm btn-success py-0 px-2 ms-1 shadow-sm" @click.stop="kirimInfoTagihanWA(g)"><i class="fa-brands fa-whatsapp"></i> WA</button>
                                         </td>
                                     </tr>
                                     <tr v-if="expandedTagihan === g.nama">
@@ -341,7 +341,7 @@
                             <h5 class="fw-bold m-0 mb-3 mb-md-0"><i class="fa-solid fa-piggy-bank text-info me-2"></i> Data Tabungan Siswa</h5>
                             <div class="d-flex gap-2">
                                 <input type="text" class="form-control form-control-sm" placeholder="Cari Nama/Kelas..." v-model="searchTabungan">
-                                <button v-if="session.role !== 'siswa'" @click="openModal('add')" class="btn btn-primary btn-sm shadow-sm" style="white-space: nowrap;"><i class="fa-solid fa-circle-plus me-1"></i> Tambah Data</button>
+                                <button v-if="['admin', 'bendahara'].includes(session.role)" @click="openModal('add')" class="btn btn-primary btn-sm shadow-sm" style="white-space: nowrap;"><i class="fa-solid fa-circle-plus me-1"></i> Tambah Data</button>
                                 <button @click="exportExcel" class="btn btn-success btn-sm shadow-sm"><i class="fa-solid fa-file-excel me-1"></i> Export XLSX</button>
                             </div>
                         </div>
@@ -393,7 +393,7 @@
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
                             <h5 class="fw-bold text-capitalize m-0 mb-3 mb-md-0"><i class="fa-solid fa-table text-primary me-2"></i> Data {{ view.replace('_', ' ') }}</h5>
                             <div class="d-flex gap-2">
-                                <button v-if="session.role !== 'siswa'" @click="openModal('add')" class="btn btn-primary btn-sm shadow-sm"><i class="fa-solid fa-circle-plus me-1"></i> Tambah Data</button>
+                                <button v-if="['admin', 'bendahara'].includes(session.role)" @click="openModal('add')" class="btn btn-primary btn-sm shadow-sm"><i class="fa-solid fa-circle-plus me-1"></i> Tambah Data</button>
                                 <button @click="exportExcel" class="btn btn-success btn-sm shadow-sm"><i class="fa-solid fa-file-excel me-1"></i> Export XLSX</button>
                             </div>
                         </div>
@@ -956,13 +956,13 @@ createApp({
             let iSaldo = this.idxTabungan.saldo;
 
             this.tableData.body.forEach(row => {
-                let nama = row[2]; // Index 2 default nama siswa
+                let nama = row[2]; 
                 if (!groups[nama]) {
                     let s = this.listSiswa.find(x => x.nama === nama);
                     let kelas = s ? s.kelas : '-';
                     groups[nama] = { nama: nama, kelas: kelas, currentSaldo: 0, details: [] };
                 }
-                groups[nama].details.push([...row]); // Hindari mutasi langsung pada array state
+                groups[nama].details.push([...row]); 
             });
             
             let arr = Object.values(groups);
@@ -975,7 +975,7 @@ createApp({
                     if (iSaldo !== -1) {
                         row[iSaldo] = saldoSum;
                     } else {
-                        row._virtualSaldo = saldoSum; // Simpan secara virtual jika sheet tak punya kolom saldo
+                        row._virtualSaldo = saldoSum; 
                     }
                 });
                 g.currentSaldo = saldoSum;
